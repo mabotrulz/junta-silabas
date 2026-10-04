@@ -518,7 +518,7 @@
 
       if (syl === expected) {
         correctSound();
-        speak(syl, true);
+        speak(syl.toLowerCase(), true);
         const slot = slots[currentSlot];
         slot.textContent = syl;
         slot.classList.add('filled', 'pulse');
@@ -532,7 +532,7 @@
       } else {
         wrongSound();
         btn.classList.add('wrong');
-        speak(`Ups! Não é ${syl}. Tenta outra vez.`, true);
+        speak(`Ups! Não é ${syl.toLowerCase()}. Tenta outra vez.`, true);
         showBubble(`Ups! Não é <b>${syl}</b>. Queremos <b>${expected}</b>!`, 2500);
         setTimeout(() => btn.classList.remove('wrong'), 400);
       }
