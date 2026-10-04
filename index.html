@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Junta Sílabas</title>
+  <style>
+    :root {
+      --bg: #e8f4f8;
+      --card: #ffffff;
+      --text: #2c3e50;
+      --accent: #4ECDC4;
+      --accent-dark: #3BA99F;
+      --wrong: #FF6B6B;
+      --gold: #FFD93D;
+      --shadow: rgba(0,0,0,0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+      background: var(--bg);
+      touch-action: manipulation;
+    }
+
+    #game {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    #hud {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .hud-panel {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 10px 18px;
+      box-shadow: 0 4px 0 var(--shadow);
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    #picture-card {
+      background: var(--card);
+      border-radius: 28px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 0 var(--shadow);
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    #picture {
+      font-size: 140px;
+      line-height: 1;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.08));
+    }
+
+    #prompt {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    #slots {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .slot {
+      width: 80px;
+      height: 70px;
+      border-radius: 18px;
+      border: 3px dashed #b0c4c9;
+      background: rgba(255,255,255,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .slot.filled {
+      border-style: solid;
+      border-color: var(--accent-dark);
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 0 var(--accent-dark);
+    }
+    .slot.pulse {
+      animation: pulse 0.5s ease;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    #choices {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 600px;
+    }
+
+    .choice {
+      width: 84px;
+      height: 76px;
+      border-radius: 20px;
+      background: var(--card);
+      border: none;
+      box-shadow: 0 6px 0 var(--shadow);
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      font-family: inherit;
+    }
+    .choice:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 var(--shadow);
+    }
+    .choice.used {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+    .choice.wrong {
+      animation: shake 0.4s ease;
+      background: var(--wrong);
+      color: white;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    #guide {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      width: 90px;
+      height: 90px;
+      z-index: 20;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.2));
+      animation: bob 2s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    #guide-bubble {
+      position: absolute;
+      bottom: 100px;
+      left: 80px;
+      background: white;
+      border-radius: 18px;
+      padding: 12px 16px;
+      max-width: 200px;
+      font-size: 14px;
+      color: var(--text);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 20;
+    }
+    #guide-bubble.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #guide-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 20px;
+      border-width: 10px 10px 0;
+      border-style: solid;
+      border-color: white transparent transparent;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+      text-align: center;
+    }
+    .overlay.hidden {
+      display: none;
+    }
+    .overlay-card {
+      background: white;
+      border-radius: 28px;
+      padding: 32px 28px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .overlay h1 {
+      margin: 0 0 12px;
+      font-size: 30px;
+      color: var(--text);
+    }
+    .overlay p {
+      margin: 0 0 24px;
+      font-size: 18px;
+      color: #555;
+      line-height: 1.4;
+    }
+    .big-button {
+      background: linear-gradient(to bottom, var(--gold), #FFC107);
+      border: none;
+      border-radius: 20px;
+      padding: 18px 36px;
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 6px 0 #E6A800, 0 8px 20px rgba(0,0,0,0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      font-family: inherit;
+    }
+    .big-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #E6A800, 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    #next-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 30;
+      display: none;
+    }
+    #next-btn.show {
+      display: block;
+    }
+
+    #mute-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--card);
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--shadow);
+      z-index: 30;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    @media (min-width: 600px) {
+      #picture { font-size: 180px; }
+      .slot { width: 100px; height: 80px; font-size: 30px; }
+      .choice { width: 100px; height: 84px; font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <button id="mute-btn" title="Som ligado/desligado">🔊</button>
+
+    <div id="hud">
+      <div class="hud-panel">Nível <span id="level-num">1</span></div>
+      <div class="hud-panel">Palavras <span id="score">0</span></div>
+    </div>
+
+    <div id="picture-card">
+      <div id="picture">🐶</div>
+    </div>
+
+    <div id="prompt">Junta as sílabas para descobrir o nome</div>
+
+    <div id="slots"></div>
+
+    <div id="choices"></div>
+
+    <button class="big-button" id="next-btn">Próxima →</button>
+
+    <svg id="guide" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="65" rx="35" ry="32" fill="#8B5A2B"/>
+      <ellipse cx="50" cy="65" rx="22" ry="20" fill="#D2A679"/>
+      <circle cx="36" cy="45" r="14" fill="white"/>
+      <circle cx="64" cy="45" r="14" fill="white"/>
+      <circle cx="36" cy="45" r="7" fill="#2c3e50"/>
+      <circle cx="64" cy="45" r="7" fill="#2c3e50"/>
+      <circle cx="38" cy="43" r="2.5" fill="white"/>
+      <circle cx="66" cy="43" r="2.5" fill="white"/>
+      <polygon points="50,52 44,62 56,62" fill="#FF8C00"/>
+      <ellipse cx="18" cy="65" rx="8" ry="16" fill="#6B4423"/>
+      <ellipse cx="82" cy="65" rx="8" ry="16" fill="#6B4423"/>
+      <ellipse cx="38" cy="95" rx="8" ry="4" fill="#FF8C00"/>
+      <ellipse cx="62" cy="95" rx="8" ry="4" fill="#FF8C00"/>
+      <polygon points="25,25 30,38 35,28" fill="#6B4423"/>
+      <polygon points="75,25 70,38 65,28" fill="#6B4423"/>
+    </svg>
+    <div id="guide-bubble">Toca nas sílabas pela ordem certa!</div>
+
+    <div id="start-overlay" class="overlay">
+      <div class="overlay-card">
+        <h1>🔮 Junta Sílabas</h1>
+        <p>Olha a imagem e junta as sílabas para descobrir o nome.</p>
+        <button class="big-button" id="start-btn">Jogar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Palavras por nível (sílabas em maiúsculas)
+    const WORDS = [
+      // Nível 1: 2 sílabas simples
+      { word: 'GATO',    syllables: ['GA', 'TO'],    emoji: '🐱', level: 1 },
+      { word: 'CÃO',     syllables: ['CÃO'],         emoji: '🐕', level: 1 },
+      { word: 'BOLA',    syllables: ['BO', 'LA'],    emoji: '⚽', level: 1 },
+      { word: 'MAÇÃ',    syllables: ['MA', 'ÇÃ'],    emoji: '🍎', level: 1 },
+      { word: 'SOL',     syllables: ['SOL'],         emoji: '☀️', level: 1 },
+      { word: 'LUA',     syllables: ['LU', 'A'],     emoji: '🌙', level: 1 },
+      { word: 'PÉ',      syllables: ['PÉ'],          emoji: '🦵', level: 1 },
+      { word: 'MÃO',     syllables: ['MÃO'],         emoji: '✋', level: 1 },
+      // Nível 2: 3 sílabas
+      { word: 'GALINHA', syllables: ['GA', 'LI', 'NHA'], emoji: '🐔', level: 2 },
+      { word: 'COELHO',  syllables: ['CO', 'EL', 'HO'],  emoji: '🐰', level: 2 },
+      { word: 'BATATA',  syllables: ['BA', 'TA', 'TA'],  emoji: '🥔', level: 2 },
+      { word: 'BANANA',  syllables: ['BA', 'NA', 'NA'],  emoji: '🍌', level: 2 },
+      { word: 'ESCOLA',  syllables: ['ES', 'CO', 'LA'],  emoji: '🏫', level: 2 },
+      { word: 'CASA',    syllables: ['CA', 'SA'],        emoji: '🏠', level: 2 },
+      // Nível 3: 4 sílabas e mais complexas
+      { word: 'BICICLETA', syllables: ['BI', 'CI', 'CLE', 'TA'], emoji: '🚲', level: 3 },
+      { word: 'ABÓBORA',   syllables: ['A', 'BÓ', 'BO', 'RA'],   emoji: '🎃', level: 3 },
+      { word: 'TELEVISÃO', syllables: ['TE', 'LE', 'VI', 'SÃO'], emoji: '📺', level: 3 },
+      { word: 'ELEFANTE',  syllables: ['E', 'LE', 'FAN', 'TE'],  emoji: '🐘', level: 3 },
+    ];
+
+    let audioCtx = null;
+    let muted = false;
+    let currentWord = null;
+    let currentSlot = 0;
+    let score = 0;
+    let level = 1;
+    let gameRunning = false;
+
+    const pictureEl = document.getElementById('picture');
+    const slotsEl = document.getElementById('slots');
+    const choicesEl = document.getElementById('choices');
+    const guideBubble = document.getElementById('guide-bubble');
+    const nextBtn = document.getElementById('next-btn');
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level-num');
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, type, duration, vol = 0.15) {
+      if (muted || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function correctSound() {
+      playTone(523, 'sine', 0.1, 0.15);
+      setTimeout(() => playTone(659, 'sine', 0.1, 0.15), 80);
+    }
+
+    function wrongSound() {
+      playTone(180, 'sawtooth', 0.2, 0.12);
+    }
+
+    function winSound() {
+      [523, 659, 784, 1047].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'sine', 0.15, 0.15), i * 100);
+      });
+    }
+
+    function speak(text, priority = false) {
+      if (muted) return;
+      if (!('speechSynthesis' in window)) return;
+      if (priority) window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'pt-PT';
+      u.rate = 0.85;
+      u.pitch = 1.05;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.lang.startsWith('pt'));
+      if (preferred) u.voice = preferred;
+      window.speechSynthesis.speak(u);
+    }
+
+    function showBubble(html, duration = 2500) {
+      guideBubble.innerHTML = html;
+      guideBubble.classList.add('visible');
+      clearTimeout(showBubble.timer);
+      showBubble.timer = setTimeout(() => guideBubble.classList.remove('visible'), duration);
+    }
+
+    function shuffle(array) {
+      const a = array.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function wordsForLevel(lv) {
+      return WORDS.filter(w => w.level <= lv);
+    }
+
+    function pickWord() {
+      const pool = wordsForLevel(level);
+      const currentGroup = pool.filter(w => w.level === level);
+      const previous = pool.filter(w => w.level < level);
+      if (previous.length && Math.random() < 0.3) {
+        return previous[Math.floor(Math.random() * previous.length)];
+      }
+      return currentGroup[Math.floor(Math.random() * currentGroup.length)];
+    }
+
+    function loadWord() {
+      currentWord = pickWord();
+      currentSlot = 0;
+      pictureEl.textContent = currentWord.emoji;
+      slotsEl.innerHTML = '';
+      choicesEl.innerHTML = '';
+      nextBtn.classList.remove('show');
+
+      currentWord.syllables.forEach(() => {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slotsEl.appendChild(slot);
+      });
+
+      const shuffled = shuffle(currentWord.syllables);
+      shuffled.forEach((syl, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = syl;
+        btn.dataset.syllable = syl;
+        btn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          handleChoice(btn, syl);
+        });
+        choicesEl.appendChild(btn);
+      });
+
+      speak(currentWord.word, true);
+      showBubble(`Toca nas sílabas para formar <b>${currentWord.word}</b>!`, 3000);
+    }
+
+    function handleChoice(btn, syl) {
+      if (!gameRunning) return;
+      const expected = currentWord.syllables[currentSlot];
+      const slots = slotsEl.children;
+
+      if (syl === expected) {
+        correctSound();
+        speak(syl, true);
+        const slot = slots[currentSlot];
+        slot.textContent = syl;
+        slot.classList.add('filled', 'pulse');
+        setTimeout(() => slot.classList.remove('pulse'), 500);
+        btn.classList.add('used');
+        currentSlot++;
+
+        if (currentSlot === currentWord.syllables.length) {
+          completeWord();
+        }
+      } else {
+        wrongSound();
+        btn.classList.add('wrong');
+        speak(`Ups! Não é ${syl}. Tenta outra vez.`, true);
+        showBubble(`Ups! Não é <b>${syl}</b>. Queremos <b>${expected}</b>!`, 2500);
+        setTimeout(() => btn.classList.remove('wrong'), 400);
+      }
+    }
+
+    function completeWord() {
+      gameRunning = false;
+      winSound();
+      score++;
+      scoreEl.textContent = score;
+      speak(currentWord.word, true);
+      showBubble(`Muito bem! É <b>${currentWord.word}</b>!`, 3000);
+      confetti();
+      nextBtn.classList.add('show');
+
+      // Level up every 4 words
+      if (score % 4 === 0 && level < 3) {
+        level++;
+        levelEl.textContent = level;
+        setTimeout(() => {
+          speak(`Nível ${level}!`, true);
+          showBubble(`Passaste para o nível <b>${level}</b>!`, 2500);
+        }, 1500);
+      }
+    }
+
+    function confetti() {
+      const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#96CEB4', '#DDA0DD'];
+      for (let i = 0; i < 30; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.left = '50%';
+        c.style.top = '40%';
+        document.body.appendChild(c);
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 80 + Math.random() * 150;
+        c.animate([
+          { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+          { transform: `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist + 100}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+        ], { duration: 900 + Math.random() * 400, easing: 'ease-out' });
+        setTimeout(() => c.remove(), 1400);
+      }
+    }
+
+    function startGame() {
+      initAudio();
+      document.getElementById('start-overlay').classList.add('hidden');
+      gameRunning = true;
+      score = 0;
+      level = 1;
+      scoreEl.textContent = score;
+      levelEl.textContent = level;
+      loadWord();
+    }
+
+    document.getElementById('start-btn').addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      startGame();
+    });
+
+    nextBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      gameRunning = true;
+      loadWord();
+    });
+
+    document.getElementById('mute-btn').addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      muted = !muted;
+      e.currentTarget.textContent = muted ? '🔇' : '🔊';
+      if (muted) window.speechSynthesis.cancel();
+    });
+
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  </script>
+</body>
+</html>
