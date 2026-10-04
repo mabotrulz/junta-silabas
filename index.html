@@ -500,10 +500,10 @@
         btn.className = 'choice';
         btn.textContent = syl;
         btn.dataset.syllable = syl;
-        btn.addEventListener('click', (e) => {
+        btn.onclick = (e) => {
           e.preventDefault();
           handleChoice(btn, syl);
-        });
+        };
         choicesEl.appendChild(btn);
       });
 
@@ -589,23 +589,23 @@
       loadWord();
     }
 
-    document.getElementById('start-btn').addEventListener('click', (e) => {
+    document.getElementById('start-btn').onclick = (e) => {
       e.preventDefault();
       startGame();
-    });
+    };
 
-    nextBtn.addEventListener('click', (e) => {
+    nextBtn.onclick = (e) => {
       e.preventDefault();
       gameRunning = true;
       loadWord();
-    });
+    };
 
-    document.getElementById('mute-btn').addEventListener('click', (e) => {
+    document.getElementById('mute-btn').onclick = (e) => {
       e.preventDefault();
       muted = !muted;
       e.currentTarget.textContent = muted ? '🔇' : '🔊';
       if (muted) window.speechSynthesis.cancel();
-    });
+    };
 
     window.speechSynthesis.getVoices();
     window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
