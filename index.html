@@ -500,7 +500,7 @@
         btn.className = 'choice';
         btn.textContent = syl;
         btn.dataset.syllable = syl;
-        btn.addEventListener('pointerdown', (e) => {
+        btn.addEventListener('click', (e) => {
           e.preventDefault();
           handleChoice(btn, syl);
         });
@@ -589,18 +589,18 @@
       loadWord();
     }
 
-    document.getElementById('start-btn').addEventListener('pointerdown', (e) => {
+    document.getElementById('start-btn').addEventListener('click', (e) => {
       e.preventDefault();
       startGame();
     });
 
-    nextBtn.addEventListener('pointerdown', (e) => {
+    nextBtn.addEventListener('click', (e) => {
       e.preventDefault();
       gameRunning = true;
       loadWord();
     });
 
-    document.getElementById('mute-btn').addEventListener('pointerdown', (e) => {
+    document.getElementById('mute-btn').addEventListener('click', (e) => {
       e.preventDefault();
       muted = !muted;
       e.currentTarget.textContent = muted ? '🔇' : '🔊';
